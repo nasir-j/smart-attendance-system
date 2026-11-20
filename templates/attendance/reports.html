@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Reports &amp; Percentages{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Attendance Reports &amp; Analytics</h2>
+      <p class="text-muted mb-0">FR-010: Per-student attendance percentage calculation: (Attended Sessions &divide; Total Sessions) &times; 100</p>
+    </div>
+    <div class="d-flex gap-2 mt-3 mt-md-0">
+      <a href="{{ url_for('attendance_reports', export='csv', class_name=selected_class, start_date=start_date, end_date=end_date) }}" class="btn btn-outline-success">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Report (CSV)
+      </a>
+      <button class="btn btn-outline-secondary" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print Report Card
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="card card-custom p-3 mb-4 no-print">
+    <form method="GET" action="{{ url_for('attendance_reports') }}" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label fw-semibold small text-muted">SELECT CLASS / SECTION</label>
+        <select name="class_name" class="form-select">
+          <option value="">-- All Classes --</option>
+          {% for c in classes %}
+            <option value="{{ c }}" {{ 'selected' if selected_class == c }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small text-muted">FROM DATE</label>
+        <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-semibold small text-muted">TO DATE</label>
+        <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+      </div>
+
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary-custom w-100">Filter</button>
+        {% if selected_class or start_date or end_date %}
+          <a href="{{ url_for('attendance_reports') }}" class="btn btn-outline-secondary">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Report Table -->
+  <div class="card card-custom">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+      <h5 class="fw-bold mb-0">
+        <i class="bi bi-person-lines-fill me-2 text-primary"></i> Student Attendance Percentages
+      </h5>
+      <span class="badge bg-light text-muted border">Threshold Target: 75%</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Roll Number</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th class="text-center">Total Sessions</th>
+              <th class="text-center">Attended</th>
+              <th class="text-center">Absent</th>
+              <th style="min-width: 180px;">Attendance %</th>
+              <th>Eligibility Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if report %}
+              {% for row in report %}
+              <tr>
+                <td><strong class="text-primary">{{ row.roll_no }}</strong></td>
+                <td class="fw-semibold">{{ row.full_name }}</td>
+                <td><span class="badge bg-light text-dark border">{{ row.class_name }}</span></td>
+                <td class="text-center fw-bold">{{ row.total_sessions }}</td>
+                <td class="text-center text-success fw-bold">{{ row.attended_sessions }}</td>
+                <td class="text-center text-danger fw-bold">{{ row.absent_sessions }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 8px;">
+                      <div class="progress-bar {{ 'bg-success' if row.percentage >= 75 else ('bg-warning' if row.percentage >= 50 else 'bg-danger') }}"
+                           role="progressbar" style="width: {{ row.percentage }}%;"></div>
+                    </div>
+                    <span class="fw-bold small {{ 'text-success' if row.percentage >= 75 else ('text-warning' if row.percentage >= 50 else 'text-danger') }}">
+                      {{ row.percentage }}%
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  {% if row.total_sessions == 0 %}
+                    <span class="badge bg-light text-muted border">No Sessions Held</span>
+                  {% elif row.percentage >= 75.0 %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Eligible (&ge; 75%)</span>
+                  {% else %}
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Shortage (&lt; 75%)</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                  <i class="bi bi-pie-chart fs-1 d-block mb-2 text-secondary"></i>
+                  No attendance records found to calculate percentages.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

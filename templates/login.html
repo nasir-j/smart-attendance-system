@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Sign In{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+      <div class="text-center mb-4">
+        <div class="d-inline-flex p-3 rounded-circle bg-primary bg-opacity-10 text-primary mb-3">
+          <i class="bi bi-person-bounding-box fs-1"></i>
+        </div>
+        <h3 class="fw-bold text-dark">Smart Attendance</h3>
+        <p class="text-muted small">IoT Facial Recognition Attendance Portal</p>
+      </div>
+
+      <div class="card card-custom p-4">
+        <form method="POST" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-muted small">USERNAME</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+              <input type="text" name="username" class="form-control" placeholder="Enter username" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold text-muted small">PASSWORD</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-key"></i></span>
+              <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary-custom w-100 py-2">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+          </button>
+        </form>
+
+        <hr class="my-4">
+
+        <div class="bg-light p-3 rounded-3 small">
+          <div class="fw-bold text-secondary mb-2"><i class="bi bi-info-circle me-1"></i> Default Demo Credentials:</div>
+          <div class="d-flex justify-content-between mb-1">
+            <span><strong>Administrator:</strong> admin</span>
+            <code>admin123</code>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span><strong>Teacher:</strong> teacher</span>
+            <code>teacher123</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-4 text-muted small">
+        <p><i class="bi bi-shield-lock me-1"></i> FR-001: Salted Passwords &amp; Role-Based Access Control</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

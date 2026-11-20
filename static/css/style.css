@@ -1,0 +1,206 @@
+:root {
+  --primary-color: #1e3c72;
+  --primary-dark: #142850;
+  --secondary-color: #2a5298;
+  --accent-color: #00adb5;
+  --accent-hover: #00878e;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --dark-bg: #0f172a;
+  --card-bg: #ffffff;
+  --body-bg: #f8fafc;
+  --text-primary: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background-color: var(--body-bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.navbar-custom {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+/* Cards */
+.card-custom {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  background: var(--card-bg);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-custom:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card {
+  border-left: 4px solid var(--accent-color);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+/* Badges */
+.badge-present {
+  background-color: #d1fae5;
+  color: #065f46;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.badge-absent {
+  background-color: #fee2e2;
+  color: #991b1b;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.badge-open {
+  background-color: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+  animation: pulse 2s infinite;
+}
+
+.badge-closed {
+  background-color: #e2e8f0;
+  color: #475569;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Buttons */
+.btn-primary-custom {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.btn-primary-custom:hover {
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: #ffffff;
+}
+
+.btn-accent {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.btn-accent:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #ffffff;
+}
+
+/* Video Containers */
+.video-wrapper {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #1e293b;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.video-stream {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.video-overlay-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  backdrop-filter: blur(4px);
+}
+
+/* Sample Thumbnails */
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.sample-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  transition: transform 0.2s ease;
+}
+
+.sample-thumb:hover {
+  transform: scale(1.05);
+  border-color: var(--accent-color);
+}
+
+/* Progress bar */
+.percentage-bar {
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Printable Styles */
+@media print {
+  .no-print, .navbar, .btn, footer {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .card-custom {
+    border: none;
+    box-shadow: none;
+  }
+}

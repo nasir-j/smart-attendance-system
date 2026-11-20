@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Camera Diagnostics &amp; Operational Tips{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Camera Diagnostics &amp; Deployment Guide</h2>
+      <p class="text-muted mb-0">Hardware testing, optical calibration, and classroom deployment tips</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Camera Diagnostics Stream -->
+    <div class="col-lg-6">
+      <div class="card card-custom p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-webcam-fill me-2 text-primary"></i> Live Diagnostic Stream</h5>
+          <span class="badge {{ 'bg-success' if camera_available else 'bg-info' }}">
+            {{ 'Physical Camera Active' if camera_available else 'Simulated / WebRTC Feed' }}
+          </span>
+        </div>
+
+        <div class="video-wrapper mb-3">
+          <img src="{{ url_for('video_feed', session_id=0) }}" class="video-stream" alt="Camera Diagnostics Feed">
+        </div>
+
+        <div class="p-3 bg-light rounded-3 small">
+          <div class="fw-bold text-dark mb-1"><i class="bi bi-gear-fill me-1"></i> Technical Resolution Profile:</div>
+          <div>Configured Stream Resolution: <strong>640 &times; 480 px</strong> (optimal for Raspberry Pi 3 CPU)</div>
+          <div>Haar Cascade: <code>haarcascade_frontalface_default.xml</code></div>
+          <div>Recognition Algorithm: <strong>OpenCV LBPH (Local Binary Patterns Histograms)</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Manual & FAQs from SRS Section 4.2 -->
+    <div class="col-lg-6">
+      <div class="card card-custom p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-question-circle-fill me-2 text-primary"></i> User Manual &amp; Deployment FAQs</h5>
+
+        <div class="accordion" id="faqAccordion">
+          <!-- FAQ 1: Positioning & Lighting -->
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                <i class="bi bi-brightness-high-fill me-2 text-warning"></i> 1. Positioning the Camera &amp; Classroom Lighting
+              </button>
+            </h2>
+            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+              <div class="accordion-body small text-muted">
+                Mount the camera at eye level (approx. 5.0 - 5.5 ft) near the classroom entrance or lecture podium. Avoid positioning the camera directly pointing towards bright outdoor windows or backlit illumination. Uniform diffuse lighting provides the fastest recognition (&lt; 3 seconds).
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 2: Unknown Faces -->
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                <i class="bi bi-shield-x me-2 text-danger"></i> 2. What Happens with Unknown Faces?
+              </button>
+            </h2>
+            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body small text-muted">
+                As specified in <strong>FR-005</strong>, any face detected that does not match an active enrolled student with sufficient confidence (&ge; 45% / LBPH distance &lt; 70) is identified as "Unknown", marked with a red bounding box, and <em>completely ignored</em> without creating any attendance record.
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 3: Duplicate Prevention -->
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                <i class="bi bi-clipboard2-check me-2 text-success"></i> 3. How Are Duplicate Attendance Records Prevented?
+              </button>
+            </h2>
+            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body small text-muted">
+                Duplicates are prevented by a two-layer defense mechanism:
+                <ul class="mb-0 mt-1 ps-3">
+                  <li><strong>Application Logic:</strong> The attendance service checks in-memory and in-database whether a student has already been recorded for the active session.</li>
+                  <li><strong>Database Constraint (FR-008):</strong> A strict SQL <code>UNIQUE(session_id, student_id)</code> constraint guarantees no duplicate attendance records can ever be inserted.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ 4: Percentage Calculation -->
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                <i class="bi bi-percent me-2 text-primary"></i> 4. How Is Attendance Percentage Calculated?
+              </button>
+            </h2>
+            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+              <div class="accordion-body small text-muted">
+                Per <strong>FR-010</strong>, each student's attendance percentage is calculated using the exact formula:
+                <div class="my-2 p-2 bg-light rounded text-center fw-bold text-dark">
+                  Attendance % = (Sessions Attended &divide; Total Sessions Held) &times; 100
+                </div>
+                Students with attendance &ge; 75% are highlighted as eligible, while those below 75% are flagged for attendance shortage.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

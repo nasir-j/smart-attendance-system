@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Attendance Sessions{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">Attendance Sessions</h2>
+      <p class="text-muted mb-0">Manage and monitor lecture attendance events</p>
+    </div>
+    {% if current_user.role in ('ADMIN', 'TEACHER') %}
+    <a href="{{ url_for('start_session') }}" class="btn btn-success mt-2 mt-md-0">
+      <i class="bi bi-play-circle-fill me-1"></i> Start New Session
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="card card-custom">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>ID</th>
+              <th>Subject</th>
+              <th>Class</th>
+              <th>Date</th>
+              <th>Duration</th>
+              <th>Status</th>
+              <th>Present / Absent</th>
+              <th>Conducted By</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if sessions %}
+              {% for s in sessions %}
+              <tr>
+                <td><strong>#{{ s.session_id }}</strong></td>
+                <td class="fw-semibold">{{ s.subject }}</td>
+                <td><span class="badge bg-light text-dark border">{{ s.class_name }}</span></td>
+                <td>{{ s.session_date }}</td>
+                <td>
+                  <small class="text-muted">
+                    {{ s.start_time }} &rarr; {{ s.end_time or 'In Progress' }}
+                  </small>
+                </td>
+                <td>
+                  {% if s.status == 'OPEN' %}
+                    <span class="badge-open"><i class="bi bi-record-circle me-1"></i> OPEN</span>
+                  {% else %}
+                    <span class="badge-closed">CLOSED</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-success me-1">{{ s.present_count }} Present</span>
+                  {% if s.status == 'CLOSED' %}
+                    <span class="badge bg-danger">{{ s.absent_count }} Absent</span>
+                  {% endif %}
+                </td>
+                <td><small>{{ s.teacher_name }}</small></td>
+                <td class="text-end">
+                  {% if s.status == 'OPEN' %}
+                    <a href="{{ url_for('live_session', session_id=s.session_id) }}" class="btn btn-sm btn-success">
+                      <i class="bi bi-broadcast me-1"></i> Live Monitor
+                    </a>
+                  {% else %}
+                    <a href="{{ url_for('session_summary', session_id=s.session_id) }}" class="btn btn-sm btn-outline-secondary">
+                      <i class="bi bi-file-text me-1"></i> View Summary
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="9" class="text-center py-5 text-muted">
+                  <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+                  No attendance sessions found.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

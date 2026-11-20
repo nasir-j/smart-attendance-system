@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Capture Face Samples - {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <a href="{{ url_for('students_list') }}" class="btn btn-outline-secondary btn-sm me-3">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h3 class="fw-bold mb-0">Biometric Face Sample Capture</h3>
+        <p class="text-muted small mb-0">FR-003: Capturing facial data for <strong>{{ student.full_name }}</strong> ({{ student.roll_no }})</p>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mt-2 mt-md-0">
+      <a href="{{ url_for('train_model') }}" class="btn btn-accent">
+        <i class="bi bi-cpu me-1"></i> Go to Model Training
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Camera Viewport & Controls -->
+    <div class="col-lg-7">
+      <div class="card card-custom p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-webcam-fill me-2 text-primary"></i> Live Camera Feed</h5>
+          <span class="badge bg-secondary">Target: 5-10 Face Samples</span>
+        </div>
+
+        <div id="statusMessage" style="display: none;"></div>
+
+        <!-- Camera Container -->
+        <div class="video-wrapper mb-3" style="min-height: 360px; display: flex; align-items: center; justify-content: center; background: #0f172a;">
+          <video id="webcamVideo" autoplay playsinline style="width: 100%; border-radius: 8px; display: none;"></video>
+          <canvas id="webcamCanvas" style="display: none;"></canvas>
+          
+          <div id="camPlaceholder" class="text-center p-4 text-white">
+            <i class="bi bi-camera-video fs-1 d-block mb-3 text-secondary"></i>
+            <h5>Webcam Ready</h5>
+            <p class="text-secondary small">Click the button below to start your browser or connected camera stream.</p>
+            <button id="btnStartCam" type="button" class="btn btn-primary-custom">
+              <i class="bi bi-camera-video me-1"></i> Start Camera
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+          <button id="btnCapture" type="button" class="btn btn-success" disabled onclick="captureAndSendSample({{ student.student_id }})">
+            <i class="bi bi-camera me-1"></i> Capture Single Sample
+          </button>
+          <button id="btnAutoCapture" type="button" class="btn btn-primary-custom" disabled onclick="autoCaptureSequence({{ student.student_id }}, 5)">
+            <i class="bi bi-lightning-charge-fill me-1"></i> Auto-Capture 5 Samples
+          </button>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- Alternative File Upload -->
+        <div>
+          <label class="form-label fw-semibold small text-muted">OR UPLOAD STUDENT PHOTO FILE</label>
+          <form id="uploadForm" enctype="multipart/form-data" class="d-flex gap-2">
+            <input type="file" id="photoFileInput" class="form-control" accept="image/*">
+            <button type="button" class="btn btn-outline-primary text-nowrap" onclick="uploadPhotoFile({{ student.student_id }})">
+              <i class="bi bi-upload me-1"></i> Upload
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stored Face Samples Preview -->
+    <div class="col-lg-5">
+      <div class="card card-custom p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i> Stored Biometrics</h5>
+          <span class="badge bg-primary fs-6"><span id="sampleCount">{{ samples|length }}</span> Samples</span>
+        </div>
+
+        <p class="text-muted small">
+          These samples are automatically detected, cropped, normalized (200x200), and equalized for lighting invariance before storing.
+        </p>
+
+        <div id="sampleGrid" class="sample-grid mt-3" style="max-height: 420px; overflow-y: auto;">
+          {% for sample in samples %}
+            <img src="{{ sample.image_path }}" class="sample-thumb" title="Captured: {{ sample.captured_at }}">
+          {% endfor %}
+        </div>
+
+        {% if samples|length == 0 %}
+          <div class="text-center py-4 text-muted" id="emptyNotice">
+            <i class="bi bi-images fs-1 d-block mb-2 text-secondary"></i>
+            No facial samples captured yet for this student.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/capture.js') }}"></script>
+<script>
+async function uploadPhotoFile(studentId) {
+  const fileInput = document.getElementById('photoFileInput');
+  if (!fileInput.files || fileInput.files.length === 0) {
+    showStatus('Please choose an image file first.', 'warning');
+    return;
+  }
+  const formData = new FormData();
+  formData.append('image', fileInput.files[0]);
+
+  showStatus('Detecting face in uploaded image...', 'info');
+
+  try {
+    const res = await fetch(`/api/students/${studentId}/save_sample`, {
+      method: 'POST',
+      body: formData
+    });
+    const result = await res.json();
+    if (result.success) {
+      showStatus(result.message, 'success');
+      document.getElementById('sampleCount').textContent = result.total_samples;
+      const thumb = document.createElement('img');
+      thumb.src = result.sample_url + '?t=' + Date.now();
+      thumb.className = 'sample-thumb animate__animated animate__zoomIn';
+      document.getElementById('sampleGrid').prepend(thumb);
+      const notice = document.getElementById('emptyNotice');
+      if (notice) notice.style.display = 'none';
+      fileInput.value = '';
+    } else {
+      showStatus(result.error || 'Failed to process face sample.', 'danger');
+    }
+  } catch (err) {
+    showStatus('Error uploading file: ' + err.message, 'danger');
+  }
+}
+</script>
+{% endblock %}

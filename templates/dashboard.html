@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+  <!-- Header with Quick Action Buttons -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1">System Dashboard</h2>
+      <p class="text-muted mb-0">Overview of IoT Face Recognition attendance operations</p>
+    </div>
+    <div class="d-flex gap-2 mt-3 mt-md-0">
+      {% if current_user.role in ('ADMIN', 'TEACHER') %}
+      <a href="{{ url_for('start_session') }}" class="btn btn-success">
+        <i class="bi bi-play-circle-fill me-1"></i> Start Attendance Session
+      </a>
+      {% endif %}
+      {% if current_user.role == 'ADMIN' %}
+      <a href="{{ url_for('register_student') }}" class="btn btn-primary-custom">
+        <i class="bi bi-person-plus-fill me-1"></i> Register Student
+      </a>
+      <form action="{{ url_for('seed_demo') }}" method="POST" class="d-inline" onsubmit="return confirm('Seed demo classes, students, and historical attendance?');">
+        <button type="submit" class="btn btn-outline-secondary" title="Re-populate demo students & attendance">
+          <i class="bi bi-database-fill-gear me-1"></i> Seed Demo Data
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Metric Stat Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card card-custom p-3 stat-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Active Students</span>
+            <h3 class="fw-bold mb-0 mt-1">{{ total_students }}</h3>
+            <span class="text-muted small">Across {{ total_classes }} Classes</span>
+          </div>
+          <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-people-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card card-custom p-3 stat-card" style="border-left-color: #10b981;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Total Sessions</span>
+            <h3 class="fw-bold mb-0 mt-1">{{ total_sessions }}</h3>
+            <span class="text-muted small">{{ open_sessions }} currently active</span>
+          </div>
+          <div class="stat-icon bg-success bg-opacity-10 text-success">
+            <i class="bi bi-calendar2-check-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card card-custom p-3 stat-card" style="border-left-color: #f59e0b;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Present Marks</span>
+            <h3 class="fw-bold mb-0 mt-1">{{ total_present_records }}</h3>
+            <span class="text-muted small">Automated face recognitions</span>
+          </div>
+          <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+            <i class="bi bi-check-all"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+      <div class="card card-custom p-3 stat-card" style="border-left-color: {{ '#10b981' if model_trained else '#ef4444' }};">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Model Status</span>
+            <h4 class="fw-bold mb-0 mt-1 text-{{ 'success' if model_trained else 'danger' }}">
+              {{ 'Trained & Ready' if model_trained else 'Not Trained' }}
+            </h4>
+            <span class="text-muted small">OpenCV LBPH Engine</span>
+          </div>
+          <div class="stat-icon bg-{{ 'success' if model_trained else 'danger' }} bg-opacity-10 text-{{ 'success' if model_trained else 'danger' }}">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Recent Attendance Sessions -->
+    <div class="col-lg-8">
+      <div class="card card-custom">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i> Recent Attendance Sessions</h5>
+          <a href="{{ url_for('sessions_list') }}" class="btn btn-sm btn-outline-primary">View All</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Session ID</th>
+                  <th>Subject</th>
+                  <th>Class</th>
+                  <th>Date &amp; Time</th>
+                  <th>Status</th>
+                  <th>Present</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if recent_sessions %}
+                  {% for s in recent_sessions %}
+                  <tr>
+                    <td><strong>#{{ s.session_id }}</strong></td>
+                    <td class="fw-semibold">{{ s.subject }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ s.class_name }}</span></td>
+                    <td>
+                      <div>{{ s.session_date }}</div>
+                      <small class="text-muted">{{ s.start_time }}</small>
+                    </td>
+                    <td>
+                      {% if s.status == 'OPEN' %}
+                        <span class="badge-open"><i class="bi bi-record-circle me-1"></i> OPEN</span>
+                      {% else %}
+                        <span class="badge-closed">CLOSED</span>
+                      {% endif %}
+                    </td>
+                    <td><span class="badge bg-success">{{ s.present_count }} Present</span></td>
+                    <td class="text-end">
+                      {% if s.status == 'OPEN' %}
+                        <a href="{{ url_for('live_session', session_id=s.session_id) }}" class="btn btn-sm btn-success">
+                          <i class="bi bi-broadcast me-1"></i> Live
+                        </a>
+                      {% else %}
+                        <a href="{{ url_for('session_summary', session_id=s.session_id) }}" class="btn btn-sm btn-outline-secondary">
+                          <i class="bi bi-file-text me-1"></i> Summary
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">
+                      No attendance sessions recorded yet. Click "Start Attendance Session" to begin.
+                    </td>
+                  </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation / System Architecture Overview -->
+    <div class="col-lg-4">
+      <div class="card card-custom mb-4">
+        <div class="card-header bg-white py-3">
+          <h5 class="fw-bold mb-0"><i class="bi bi-diagram-3-fill me-2 text-primary"></i> IoT System Architecture</h5>
+        </div>
+        <div class="card-body">
+          <div class="p-3 bg-light rounded-3 mb-3 small">
+            <div class="fw-bold text-dark mb-1"><i class="bi bi-hdd-network me-1"></i> Edge IoT Logic Tier</div>
+            <p class="text-muted mb-0">Runs frame capture, Haar face detection, and LBPH recognition. Low power profile suited for Raspberry Pi 3 or PC edge server.</p>
+          </div>
+          <div class="p-3 bg-light rounded-3 mb-3 small">
+            <div class="fw-bold text-dark mb-1"><i class="bi bi-database me-1"></i> Normalized 3NF Database</div>
+            <p class="text-muted mb-0">Stores users, students, facial sample encodings, sessions, and deduplicated attendance records.</p>
+          </div>
+          <div class="p-3 bg-light rounded-3 small">
+            <div class="fw-bold text-dark mb-1"><i class="bi bi-shield-check me-1"></i> Strict Biometric Privacy</div>
+            <p class="text-muted mb-0">Facial data collected only for enrolled students; automatically purged when a student is deleted.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
